@@ -1,0 +1,197 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import integrate
+#Построение графиков
+def print_pol2(ans , line, f_l , f_r):
+    num = round(ans[0], 40)
+    polynomial = "" + str( num)
+    for x in range(1, line):
+        if ans[x] > 0:
+            polynomial += " + " + str(  round(ans[x], 40)) + " * x **" + str(x)
+        else:
+            if ans[x] < 0:
+                polynomial += " - " + str( abs ( round(ans[x], 40))) + " * x **" + str(x)
+
+    print(polynomial)
+    x = np.arange(f_l, f_r, 0.01)
+    plt.plot(x, eval(polynomial))
+    plt.show()
+#Построение графиков
+def print_pol1(ans , line, f_l , f_r , fun):
+    polynomial = "" + str( round(ans[0], 40))
+    for x in range(1, line):
+        if ans[x] > 0:
+            polynomial += " + " + str( round(ans[x], 40)) + " * x ** " + str(x)
+        else:
+            if ans[x] < 0:
+                polynomial += " - " + str( abs (round(ans[x], 40))) + " * x ** " + str(x)
+    print(polynomial)
+    x = np.arange(f_l , f_r , 0.01)
+    plt.plot(x, eval(polynomial) , x , eval(fun))
+    plt.show()
+#Вывод многочлена
+def f_polynomial(ans , x):
+    s = 0
+    for i in range(len(ans)):
+        s += ans[i] * (x**i)
+    return s
+#Разница между функцией и многочленом
+def f(x , function , ans ):
+    return abs(eval(function) - f_polynomial(ans, x))
+#Перестановка строк в матрице
+def m_transposition(array, line , column):
+    m_array = array
+    k = 0
+    l = 0
+    for a in range(0, line -1):
+        i = array[a][a]
+        if i == 0:
+            for j in range(0 ,line - 1 - a):
+                b = array[a + j + 1][a]
+                if b != 0:
+                    k = a + j + 1
+                    l = a
+                    for c in range(0, column):
+                        m_array[l][c] , m_array[k][c] = m_array[k][c] , m_array[l][c]
+                    break
+    return (m_array)
+#Поиск нулевых строк
+def zero_m(array , line , column):
+    m_array = []
+    for i in range(line):
+        zero_count = 0
+        l = []
+        for j in range(column):
+            if array[i][j] == 0:
+                zero_count += 1
+            l.append(array[i][j])
+        if zero_count != column :
+            m_array.append(l)
+    return m_array
+#Приведение матрицы к треугольному виду
+def matrix( array ,line , column):
+    m_array = array
+    for a in range(0 , line -1):
+        i = array[a][a]
+        for b in range(1 ,line  - a):
+            line = len(m_array)
+            j = m_array[a + b][a]
+            mn = j /i
+            for c in range(0 , column - a):
+                m_array[a+b][a + c] = m_array[a+b][a + c] - mn * m_array[a][a + c]
+    return m_array
+#Обраходных ход метода Гауса
+def reverse_method(array , line , column):
+    ans = []
+    x = line - 1
+    y = column - 1
+    for i in range(0 , line ):
+        if i == 0:
+            ans.append( array[x][y] / array[x][y - 1])
+        else:
+            s = 0
+            for j in range(i):
+                s += ans[j] * array[x - i][y - j - 1]
+            a = (array[x - i][y] - s) / (array[x - i][y - i - 1])
+            ans.append(a)
+    ans.reverse()
+    return ans
+#выбор режима работы программы
+mode = int(input())
+if mode == 2 :
+    f_input = str(input())
+    line = int(input())
+    column = line + 1
+    array_input = []
+    b = [float(y) for y in input().split()]
+    k = (b[1] - b[0]) / (line - 1)
+    for c in range(line):
+        x = b[0] + k * c
+        a =[]
+        a.append(x)
+        a.append(eval(f_input))
+        array_input.append(a)
+
+if mode == 3:
+    line = int(input())
+    column = line + 1
+    array_input = []
+    for x in range(line):
+        a = [float(y) for y in input().split()]
+        array_input.append(a)
+
+if mode == 1 : #Основной режим работы программы
+    f_input = str(input())
+    z = 0
+    l_max = 1
+    fault = float(input())
+    f_ans = []
+    section = [int(y) for y in input().split()]
+    minf = 10 ** 64
+    for y in range(2, 40):
+        raz = 0
+        ans = []
+        column = y + 1
+        line = y
+        indent = y
+        array_input = []
+        k = (section[1] - section[0]) / (line - 1)
+        for c in range(line):
+            x = section[0] + k * c
+            a = []
+            a.append(x)
+            a.append(float(eval(f_input)))
+            array_input.append(a)
+        k_array = []
+        for c in range(line):
+            b = float(array_input[c][0])
+            s = []
+            for j in range(line):
+                s.append(b ** j)
+            s.append(array_input[c][1])
+            k_array.append(s)
+        mat = m_transposition(k_array, line, int(column))
+        mat = matrix(mat, line, int(column))
+        ans = reverse_method(mat, line, column)
+        raz = (integrate.quad(f , section[0] , section[1] , args=(f_input , ans)))
+        print(raz[0])
+        if raz[0] / (section[1] - section[0]) < (fault) and l_max == 1:
+            minf = raz
+            z = y
+            f_ans = ans
+            l_max = line
+            break
+    print(l_max)
+    print_pol1(f_ans, l_max, section[0], section[1], f_input)
+
+if mode == 2: #режим построения многочлена на отрезке с заданным количеством узлов
+    k_array = []
+    for x in range(line):
+        q = float(array_input[x][0])
+        s = []
+        for y in range(line):
+            s.append(q ** y)
+        s.append(array_input[x][1])
+        k_array.append(s)
+    mat = m_transposition(k_array, line, int(column))
+    mat = matrix(mat, line, int(column))
+    ans = reverse_method(mat, line, column)
+    print_pol1(ans, line , float(b[0]), float(b[1]) , f_input )
+
+if mode == 3: #режим построения многочлена по заданным пользователем точкам
+    k_array = []
+    max_v = 0
+    min_v = float(array_input[0][0])
+    for x in range(line):
+        q = float(array_input[x][0])
+        max_v = max(max_v, q)
+        min_v = min(min_v, q)
+        s = []
+        for y in range(line):
+            s.append(q ** y)
+        s.append(array_input[x][1])
+        k_array.append(s)
+    mat = m_transposition(k_array, line, int(column))
+    mat = matrix(mat, line, int(column))
+    ans = reverse_method(mat, line, column)
+    print_pol2(ans, line , min_v , max_v )
